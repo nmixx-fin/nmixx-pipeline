@@ -66,7 +66,8 @@ def parse_list_from_output(text):
 def process_example(example):
     category = example["category"]
     text = example["text"]
-    template = prompt_templates.get(category, "Error라고 말해")
+    
+    template = prompt_templates.get(category, "파이썬 리스트 안에 문자열 'error' 넣어줘줘")
     prompt = template.format(source_text=text)
     
     try:
@@ -85,9 +86,14 @@ def process_example(example):
         print(f"Error processing example with text: {text}\nError: {e}")
         generated_text = None
 
+
     parsed_result = parse_list_from_output(generated_text)
+    if not isinstance(parsed_result, list):
+        parsed_result = []
+
     example["classification_result"] = parsed_result
     return example
+
 
 # ---------------------------------------------------------------------------
 # 데이터셋의 각 row에 대해 처리 (row 단위로 OpenAI API 호출)

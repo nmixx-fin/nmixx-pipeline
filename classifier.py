@@ -67,7 +67,7 @@ def process_example(example):
     category = example["category"]
     text = example["text"]
     
-    template = prompt_templates.get(category, "파이썬 리스트 안에 문자열 'error' 넣어줘줘")
+    template = prompt_templates.get(category, "['error'] 라고 남겨겨")
     prompt = template.format(source_text=text)
     
     try:
@@ -81,19 +81,18 @@ def process_example(example):
             temperature=0.0,     
         )
         generated_text = completion.choices[0].message.content.strip()
-        generated_text = re.sub(r'출력\s*:\s*', '', generated_text)
+        generated_text = re.sub(r'출력력\s*:\s*', '', generated_text)
     except Exception as e:
         print(f"Error processing example with text: {text}\nError: {e}")
         generated_text = None
 
-
     parsed_result = parse_list_from_output(generated_text)
+    
     if not isinstance(parsed_result, list):
-        parsed_result = []
-
+        parsed_result = [generated_text] if generated_text is not None else []
+    
     example["classification_result"] = parsed_result
     return example
-
 
 # ---------------------------------------------------------------------------
 # 데이터셋의 각 row에 대해 처리 (row 단위로 OpenAI API 호출)

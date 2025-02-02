@@ -24,7 +24,7 @@ RPT_CLS = """
     3: 새로운 상황 (Emerging Situations): 새롭게 등장한 비즈니스 상황을 기술하여 의미를 변화시킬 수 있음.
     4: 미시적 관점 vs 거시적 관점 (Micro vs Macro Perspective). 문장의 관점을 미시적 혹은 거시적으로 변경하여 의미를 변화시킬 수 있음.
     5: 사실 vs 의견 (Fact vs Opinion). 사실과 의견을 혼동하거나 구분하여 의미를 변화시킬 수 있음.
-    6. 금융 전문 용어 vs 일반 용어 (Financial Jargon vs General Terms). 금융 전문 용어에서 일반 용어로 바꾸거나, 그 반대로 바꿔 의미를 변화시킬 수 있음음.
+    6. 금융 전문 용어 vs 일반 용어 (Financial Jargon vs General Terms). 금융 전문 용어에서 일반 용어로 바꾸거나, 그 반대로 바꿔 의미를 변화시킬 수 있음.
     전부 해당하지 않는 경우엔 빈 리스트를 반환해주세요.
 
     예시: 

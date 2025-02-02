@@ -66,7 +66,7 @@ def parse_list_from_output(text):
 def process_example(example):
     category = example["category"]
     text = example["text"]
-    template = prompt_templates.get(category, "Error라고 말해해")
+    template = prompt_templates.get(category, "Error라고 말해")
     prompt = template.format(source_text=text)
     
     try:
@@ -92,7 +92,8 @@ def process_example(example):
 # ---------------------------------------------------------------------------
 # 데이터셋의 각 row에 대해 처리 (row 단위로 OpenAI API 호출)
 # ---------------------------------------------------------------------------
-new_dataset = dataset.map(process_example, batched=False)
+new_dataset = dataset.map(process_example, batched=False, desc="Processing examples")
+
 
 # ---------------------------------------------------------------------------
 # 처리된 결과 데이터셋을 Hugging Face Hub에 push (API 키 포함)

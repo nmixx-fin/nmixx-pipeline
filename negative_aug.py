@@ -5,6 +5,7 @@ import pandas as pd
 from openai import OpenAI
 from datasets import load_dataset, Dataset
 from prompt_template import NEWS_AUG, RPT_AUG, LAW_AUG, DIS_AUG, ETC_AUG
+from tqdm import tqdm
 
 # =============================================================================
 # 1. API 키 및 OpenAI 클라이언트 초기화
@@ -124,13 +125,13 @@ def process_single_augmentation(prompt_text):
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # 필요시 실제 모델명으로 수정
+            model="gpt-4o-mini", 
             messages=[
                 {"role": "system", "content": "응답은 반드시 파이썬 리스트 형식으로만 출력하세요."},
                 {"role": "user", "content": prompt_text}
             ],
-            max_tokens=150,
-            temperature=0.0,
+            max_tokens=16000,
+            temperature=1.0,
         )
         output_text = response.choices[0].message.content.strip()
         parsed = parse_list_from_output(output_text)
@@ -146,7 +147,7 @@ def process_single_augmentation(prompt_text):
 # 5. 각 원본 row에 대해 augmentation 처리 (확장)
 # =============================================================================
 total_rows = len(df_orig)
-for i in range(start_index, total_rows):
+for i in tqdm(range(start_index, total_rows)):
     row = df_orig.iloc[i]
     category = row["category"]
     source_text = row["text"]

@@ -36,7 +36,7 @@ df_orig["classification_result"] = df_orig["classification_result"].apply(parse_
 # =============================================================================
 # 3. 중간 저장 설정 및 체크포인트 로드
 # =============================================================================
-output_path = "./output/pos_augmented.csv"
+output_path = "./output/augmented_pos.csv"
 os.makedirs("./output", exist_ok=True)
 
 # augmented_rows: 최종 확장된 row들을 저장할 리스트
@@ -78,22 +78,11 @@ def parse_list_from_output(text):
     else:
         return None
 
-def get_aug_prompts(category, classification_result, source_text, fallback=False):
+def get_aug_prompt(source_text):
     """
-    이제 무조건 POS_AUG 프롬프트를 사용합니다.
-    만약 classification_result가 리스트라면 각 요소에 대해 하나씩 prompt를 생성하고,
-    없다면 fallback으로 한 번 생성합니다.
-    
-    반환값은 각 augmentation 호출에 대해 (aug_index, prompt_text) 튜플의 리스트입니다.
+    단순히 POS_AUG 템플릿을 사용하여 prompt를 생성합니다.
     """
-    prompt_template = POS_AUG
-    prompts = []
-    if isinstance(classification_result, list) and len(classification_result) > 0:
-        for elem in classification_result:
-            prompts.append((elem, prompt_template.format(source_text=source_text)))
-    else:
-        prompts.append((None, prompt_template.format(source_text=source_text)))
-    return prompts
+    return POS_AUG.format(source_text=source_text)
 
 def process_single_augmentation(prompt_text):
     """
@@ -121,7 +110,7 @@ def process_single_augmentation(prompt_text):
         return None
 
 # =============================================================================
-# 5. 각 원본 row에 대해 augmentation 처리 (확장)
+# 5. 각 원본 row에 대해 augmentation 처리 (하나의 augmented row만 생성)
 # =============================================================================
 total_rows = len(df_orig)
 for i in tqdm(range(start_index, total_rows)):
@@ -130,29 +119,26 @@ for i in tqdm(range(start_index, total_rows)):
     source_text = row["text"]
     classification_result = row["classification_result"]
 
-    # classification_result와 관계없이 항상 POS_AUG를 사용하여 prompt 생성
-    prompt_tuples = get_aug_prompts(category, classification_result, source_text, fallback=False)
+    # 단 한 번만 POS_AUG 프롬프트 사용 (classification_result는 무시)
+    prompt_text = get_aug_prompt(source_text)
+    result = process_single_augmentation(prompt_text)
+    # fallback 시도: 실패하면 한 번 더 POS_AUG 프롬프트로 재시도
+    if result is None:
+        fallback_prompt = POS_AUG.format(source_text=source_text)
+        result = process_single_augmentation(fallback_prompt)
+    if result is None:
+        result = [None, None, None]
     
-    # 각 augmentation 호출마다 새로운 row를 생성 (원본 row가 여러 augmented row로 확장됨)
-    for aug_idx, prompt_text in prompt_tuples:
-        result = process_single_augmentation(prompt_text)
-        # fallback 시도: 기본 호출이 실패하면 POS_AUG 프롬프트로 재시도
-        if result is None:
-            fallback_prompt = POS_AUG.format(source_text=source_text)
-            result = process_single_augmentation(fallback_prompt)
-        if result is None:
-            result = [None, None, None]
-        new_row = {
-            "orig_index": i,
-            "category": category,
-            "text": source_text,
-            "classification_result": str(classification_result),
-            "aug_index": aug_idx,  # classification_result에 나온 해당 인덱스 (없으면 None)
-            "hard_positive_1": result[0],
-            "hard_positive_2": result[1],
-            "hard_positive_3": result[2]
-        }
-        augmented_rows.append(new_row)
+    new_row = {
+        "orig_index": i,
+        "category": category,
+        "text": source_text,
+        "classification_result": str(classification_result),
+        "hard_positive_1": result[0],
+        "hard_positive_2": result[1],
+        "hard_positive_3": result[2]
+    }
+    augmented_rows.append(new_row)
     
     # 매 100개의 원본 row마다 중간 저장
     if (i + 1) % 100 == 0 or (i + 1) == total_rows:

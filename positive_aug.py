@@ -148,9 +148,9 @@ for i in tqdm(range(start_index, total_rows)):
             "text": source_text,
             "classification_result": str(classification_result),
             "aug_index": aug_idx,  # classification_result에 나온 해당 인덱스 (없으면 None)
-            "hard_negative_1": result[0],
-            "hard_negative_2": result[1],
-            "hard_negative_3": result[2]
+            "hard_positive_1": result[0],
+            "hard_positive_2": result[1],
+            "hard_positive_3": result[2]
         }
         augmented_rows.append(new_row)
     

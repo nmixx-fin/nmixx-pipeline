@@ -131,7 +131,7 @@ NEWS_AUG = {
 {COMMON_OUTPUT_INSTRUCTIONS}
 입력: {{source_text}}
 출력:
-"""
+""",
 }
 
 # --- 리포트 증강 ---
@@ -191,7 +191,7 @@ RPT_AUG = {
 {COMMON_OUTPUT_INSTRUCTIONS}
 입력: {{source_text}}
 출력:
-"""
+""",
 }
 
 # --- 법률 증강 ---
@@ -219,7 +219,7 @@ LAW_AUG = {
 {COMMON_OUTPUT_INSTRUCTIONS}
 입력: {{source_text}}
 출력:
-"""
+""",
 }
 
 # --- 공시 증강 ---
@@ -255,7 +255,7 @@ DIS_AUG = {
 {COMMON_OUTPUT_INSTRUCTIONS}
 입력: {{source_text}}
 출력:
-"""
+""",
 }
 
 # --- 기타 증강 (Fallback) ---
@@ -283,4 +283,3 @@ POS_AUG = f"""
 입력: {{source_text}}
 출력:
 """
-

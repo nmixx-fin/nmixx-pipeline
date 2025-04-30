@@ -285,4 +285,7 @@ data/
 notebook/
 notebook/*
 
+output/
+output/*
+
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,linux,macos,windows

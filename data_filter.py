@@ -1,33 +1,57 @@
 import re
 import pandas as pd
+from typing import List, Tuple
+from langdetect import detect,LangDetectException
 
-from typing import List, Dict, Callable, Any
 
+def detect_language(df: pd.DataFrame) -> pd.DataFrame:
+    """Detect text language and add 'lang' column safely."""
+    print("Detecting language...")
+    df = df.copy()
+    langs: List[str] = []
+    for text in df['text'].fillna(''):
+        txt = text.strip()
+        if not txt:
+            langs.append('und')
+        else:
+            try:
+                langs.append(detect(txt))
+            except LangDetectException:
+                langs.append('und')
+    df['lang'] = langs
+    return df
 
-def base_filter(df):
+def base_filter(df: pd.DataFrame) -> pd.DataFrame:
     """
-    기본 필터링 함수. 모든 행을 반환합니다.
+    전체 데이터프레임을 한국어는 기존 카테고리별 필터로, 영어는 그대로 유지하고
+    마지막에 텍스트 길이 조건(<30 또는 >=2000)으로 행을 제거합니다.
     """
-    # 뉴스 데이터 필터링
-    news_df = df[df["category"] == "뉴스"].copy()
-    news_df = news_filter(news_df)
+    # 1) 언어 감지
+    df = detect_language(df)
 
-    # 법률 데이터 필터링
-    law_df = df[df["category"] == "법률"].copy()
-    law_df = law_filter(law_df)
+    # 2) 한국어 / 영어 분리
+    ko_df = df[df['lang'] == 'ko']
+    en_df = df[df['lang'] == 'en']
 
-    # 리포트 데이터 필터링
-    report_df = df[df["category"] == "리포트"].copy()
-    report_df = report_filter(report_df)
+    # 한국어 처리: 카테고리별 필터
+    ko_news   = news_filter(   ko_df[ko_df['category'] == '뉴스'].copy() )
+    ko_law    = law_filter(    ko_df[ko_df['category'] == '법률'].copy() )
+    ko_report = report_filter( ko_df[ko_df['category'] == '리포트'].copy() )
+    ko_dart   = dart_filter(   ko_df[ko_df['category'] == '공시'].copy() )
 
-    # 공시 데이터 필터링
-    dart_df = df[df["category"] == "공시"].copy()
-    dart_df = dart_filter(dart_df)
+    # 영어 처리: 그대로 통과
+    en_filtered = en_df.copy()
 
-    # 모든 데이터프레임 합치기
-    filtered_df = pd.concat([news_df, law_df, report_df, dart_df])
+    # 3) 합치기
+    filtered_df = pd.concat([ko_news, ko_law, ko_report, ko_dart, en_filtered],
+                             ignore_index=True)
+
+    # 4) 전체 텍스트 길이 제한: 30 미만 또는 2000 이상은 제거
+    lengths = filtered_df['text'].str.len().fillna(0)
+    mask = (lengths >= 30) & (lengths < 2000)
+    filtered_df = filtered_df[mask].reset_index(drop=True)
+
     return filtered_df
-
 
 def base_text_cleaning(text: str) -> str:
     """기본 텍스트 정제를 수행하는 유틸리티 함수"""
@@ -51,6 +75,7 @@ def apply_common_filters(
     df: pd.DataFrame, min_length: int = 50
 ) -> tuple[pd.DataFrame, List[tuple]]:
     """공통 필터링 로직을 적용하는 유틸리티 함수"""
+    print("Applying common filters...")
     filtered_df = df.copy()
     initial_count = len(filtered_df)
     removed_counts = []
@@ -95,6 +120,7 @@ def apply_common_filters(
 
 def news_filter(df: pd.DataFrame) -> pd.DataFrame:
     """뉴스 데이터 필터링"""
+    print("Filtering news data...")
     # 공통 필터 적용
     filtered_df, _ = apply_common_filters(df, min_length=50)
 
@@ -162,6 +188,7 @@ def news_filter(df: pd.DataFrame) -> pd.DataFrame:
 
 def law_filter(df: pd.DataFrame, strict_mode: bool = True) -> pd.DataFrame:
     """법률 데이터 필터링"""
+    print("Filtering legal data...")
     min_length = 100 if strict_mode else 50
     filtered_df, _ = apply_common_filters(df, min_length=min_length)
 
@@ -265,6 +292,7 @@ def law_filter(df: pd.DataFrame, strict_mode: bool = True) -> pd.DataFrame:
 
 def report_filter(df: pd.DataFrame, strict_mode: bool = True) -> pd.DataFrame:
     """리포트 데이터 필터링"""
+    print("Filtering report data...")
     min_length = 100 if strict_mode else 50
     filtered_df, _ = apply_common_filters(df, min_length=min_length)
 
@@ -304,6 +332,7 @@ def report_filter(df: pd.DataFrame, strict_mode: bool = True) -> pd.DataFrame:
 
 def dart_filter(df: pd.DataFrame, strict_mode: bool = True) -> pd.DataFrame:
     """공시(DART) 데이터 필터링"""
+    print("Filtering DART data...")
     min_length = 200 if strict_mode else 50
     filtered_df, _ = apply_common_filters(df, min_length=min_length)
 
